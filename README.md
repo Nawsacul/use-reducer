@@ -1,4 +1,4 @@
-* **Gerenciando o estado com o useReducer: organização e flexibilidade no React.js**
+# Gerenciando o estado com o useReducer: organização e flexibilidade no React.js**
 
 **Resumo:**
 
