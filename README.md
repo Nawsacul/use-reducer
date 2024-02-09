@@ -1,68 +1,53 @@
-### Entendendo `useReducer` no React
+* **Gerenciando o estado com o useReducer: organização e flexibilidade no React.js**
 
-- **Propósito**: `useReducer` é utilizado para gerenciar regras de negócio e lógica de estado de forma mais centralizada e organizada, especialmente útil para estados complexos ou quando a lógica de atualização é complexa.
+**Resumo:**
 
-#### Configuração Inicial
+O `useReducer` é um hook do React que oferece uma maneira alternativa de gerenciar o estado de seus componentes. Em comparação ao `useState`, o `useReducer` fornece maior flexibilidade para lidar com regras de negócios complexas e estados compartilhados.
 
-1. **Criação de um novo arquivo `reducer.js`**:
-   - Este arquivo não retorna JSX.
-   - Contém uma função `reducer` que manipula o estado e a ação.
+**StrictMode:**
+
+* O `StrictMode` pode ser ativado no `main.jsx` para realizar verificações adicionais no código.
+* O `useReducer` será chamado duas vezes no `StrictMode`, o que pode ser útil para depuração, mas também pode gerar alertas desnecessários.
+
+**Funcionamento:**
+
+O `useReducer` funciona com base em dois pilares:
+
+* **Função reducer:** Uma função pura que recebe o estado atual e uma ação como parâmetros e retorna o novo estado.
+* **Ações:** Objetos que definem o que deve ser feito com o estado.
+
+**Criando um reducer:**
+
+1. Crie um arquivo `reducer.js`.
+2. Defina a função `reducer` que recebe `estado` e `acao` como parâmetros:
 
 ```javascript
 const reducer = (estado, acao) => {
-  // Lógica do reducer
+  // ... lógica de atualização do estado
 };
 
 export default reducer;
 ```
 
-2. **Estado e Ação**:
-   - O `reducer` tem acesso ao estado atual e à ação que está sendo executada.
-   - A ação é um objeto definido pelo desenvolvedor, que pode conter qualquer coisa, mas geralmente tem um tipo (por exemplo, "ADICIONAR_FRASE").
+**Exemplo:**
 
-3. **Manipulação de Ações com `switch`**:
-   - As validações e lógicas antes presentes no componente (ex.: `App.jsx`) são transferidas para o `reducer` usando um `switch` para tratar diferentes tipos de ações.
-
-#### Exemplo Prático
-
-- **Antes (no `App.jsx`)**:
+Considere um componente que gerencia uma lista de frases. A função `reducer` pode ser definida da seguinte forma:
 
 ```javascript
-function salvarFrase(evento) {
-  evento.preventDefault();
-  if (frase.length < 20) {
-    alert("Ops... Não são permitidas frases com menos de 20 caracteres!");
-    return;
-  }
-
-  if (frases.includes(frase)) {
-    alert("Não são permitidas frases duplicadas!");
-    return;
-  }
-
-  setFrases([...frases, frase]);
-}
-```
-
-- **Depois (no `reducer.js`)**:
-
-```javascript
-export const ADICIONAR_FRASE = "ADICIONAR_FRASE";
-
 const reducer = (estado, acao) => {
   switch (acao.tipo) {
-    case ADICIONAR_FRASE:
+    case "ADICIONAR_FRASE":
       if (acao.frase.length < 20) {
-        alert("Ops... Não são permitidas frases com menos de 20 caracteres!");
+        alert("Frase muito curta!");
         return estado;
       }
-
       if (estado.includes(acao.frase)) {
-        alert("Não são permitidas frases duplicadas!");
+        alert("Frase duplicada!");
         return estado;
       }
       return [...estado, acao.frase];
-
+    case "EXCLUIR_FRASE":
+      return estado.filter(frase => frase !== acao.frase);
     default:
       return estado;
   }
@@ -71,77 +56,100 @@ const reducer = (estado, acao) => {
 export default reducer;
 ```
 
-#### Integração com `useReducer`
+**Utilizando o `useReducer`:**
 
-- **No `App.jsx`**:
-  - Importação do `useReducer` e do reducer criado.
-  - Inicialização do estado com `useReducer`.
+1. Importe o hook `useReducer` e o reducer criado:
 
 ```javascript
-import { useReducer } from "react";
-import reducer, { ADICIONAR_FRASE } from "./reducer";
+import useReducer from "react";
+import reducer from "./reducer";
+```
 
+2. Utilize o hook `useReducer` no componente:
+
+```javascript
 const [frases, dispatch] = useReducer(reducer, []);
 ```
 
-- **Atualizando a função `salvarFrase`**:
+O hook retorna um array com duas posições:
+
+* `frases`: O estado atual, neste caso, a lista de frases.
+* `dispatch`: Uma função para enviar ações para o reducer.
+
+**Enviando ações:**
+
+Para atualizar o estado, envie uma ação para o reducer usando a função `dispatch`:
 
 ```javascript
 function salvarFrase(evento) {
   evento.preventDefault();
+
+  const frase = evento.target.value;
+
   dispatch({
-    tipo: ADICIONAR_FRASE,
-    frase
+    tipo: "ADICIONAR_FRASE",
+    frase,
   });
 }
 ```
 
-- **Adicionando novas ações** (exemplo: `EXCLUIR_FRASE`):
+**Exemplo completo:**
 
 ```javascript
-import reducer, { ADICIONAR_FRASE } from "./reducer";
-```
+import React, { useState } from "react";
+import useReducer from "react";
+import reducer from "./reducer";
 
-```javascript
-function excluir(fraseExcluida) {
-  dispatch({
-    tipo: EXCLUIR_FRASE,
-    frase: fraseExcluida
-  });
-}
-```
+function App() {
+  const [frases, dispatch] = useReducer(reducer, []);
 
-- **No arquivo reducer.js:**
+  function salvarFrase(evento) {
+    evento.preventDefault();
 
-```javascript
-export const ADICIONAR_FRASE = "ADICIONAR_FRASE";
-export const EXCLUIR_FRASE = "EXCLUIR_FRASE";
+    const frase = evento.target.value;
 
-const reducer = (estado, acao) => {
-  switch (acao.tipo) {
-    case ADICIONAR_FRASE:
-      if (acao.frase.length < 20) {
-        alert("Ops... Não são permitidas frases com menos de 20 caracteres!");
-        return estado; //Se falhar, retorna o estado.
-      }
-
-      if (estado.includes(acao.frase)) {
-        alert("Não são permitidas frases duplicadas!");
-        return estado; //Se falhar, retorna o estado.
-      }
-      return [...estado, acao.frase]; // Se tudo passar, será feito um return de um novo array passando o estado antigo e adicionando a frase que está na ação.
-    
-    case EXCLUIR_FRASE:
-        return estado.filter(frase => frase !== acao.frase)
-    default:
-      return estado;
+    dispatch({
+      tipo: "ADICIONAR_FRASE",
+      frase,
+    });
   }
-};
 
-export default reducer;
+  function excluirFrase(fraseExcluida) {
+    dispatch({
+      tipo: "EXCLUIR_FRASE",
+      frase: fraseExcluida,
+    });
+  }
+
+  return (
+    <div>
+      <h1>Lista de frases</h1>
+      <form onSubmit={salvarFrase}>
+        <input type="text" name="frase" />
+        <button type="submit">Salvar</button>
+      </form>
+      <ul>
+        {frases.map((frase, index) => (
+          <li key={index}>
+            {frase} - <button onClick={() => excluirFrase(frase)}>X</button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export default App;
 ```
 
-#### Observações
+**Vantagens do `useReducer`:**
 
-- **`useReducer` vs `useState`**: Embora internamente `useReducer` utilize `useState`, oferece uma abordagem mais estruturada e centralizada para gerenciar estados complexos.
-- **.StrictMode**: Pode causar duplicidade nas validações em modo de desenvolvimento, mas é benéfico para identificar problemas.
+* **Organização:** Centraliza a lógica de negócios em um único lugar.
+* **Flexibilidade:** Permite lidar com estados complexos e ações personalizadas.
+* **Reusabilidade:** O reducer pode ser reutilizado em diferentes componentes.
+* **Teste:** Facilita o teste da lógica de estado.
+
+**Recursos adicionais:**
+
+* Documentação do React sobre o useReducer: [Documentação React useReducer](https://react.dev/reference/react/useReducer)
+* Artigo sobre o useReducer vs. useState: [Artigo](https://blog.logrocket.com/react-usereducer-hook-ultimate-guide/)
